@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { HistoryService } from './services/history.service';
 import { ElasticSearchModule } from 'src/services/elasticsearch/elasticsearch.module';
+import { EsQueriesService } from 'src/modules/es/esqueries.service';
 
 @Module({
     imports: [
@@ -25,7 +26,9 @@ import { ElasticSearchModule } from 'src/services/elasticsearch/elasticsearch.mo
         ]),
         ElasticSearchModule
     ],
-    providers: [HistoryService
+    providers: [
+        HistoryService,
+        EsQueriesService
     ],
     exports: [
         HistoryService
