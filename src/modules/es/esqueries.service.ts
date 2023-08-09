@@ -19,7 +19,7 @@ export class EsQueriesService {
   ) { }
 
   /**
-   * 
+   * DSL query to get the latest history of the hash
    * @param hash 
    * @returns the latest history associated with this hash if present
    */
@@ -38,7 +38,7 @@ export class EsQueriesService {
   }
 
   /**
-   * 
+   * DSL query to the full history for the input hash
    * @param hash 
    * @returns 
    */
@@ -49,6 +49,29 @@ export class EsQueriesService {
           "key.keyword": hash
         }
       },
+      "sort": [
+        { "timestamp": "desc" }
+      ]
+    }
+  }
+
+  /**
+   * DSL query to get the history of a hash at a particular version
+   * @param hash 
+   * @param version 
+   * @returns 
+   */
+  getHistoryAtVersion(hash: string, version: number) {
+    return {
+      "query": {
+        "bool": {
+          "must": [
+            { "term": { "key.keyword": hash } },
+            { "term": { "version": version } }
+          ]
+        }
+      },
+      "size": 1,
       "sort": [
         { "timestamp": "desc" }
       ]

@@ -110,6 +110,12 @@ export class HistoryService {
         }
     }
 
+    /**
+     * This function is responsible to comapre the two payloads
+     * @param currentPayload 
+     * @param previousPayload 
+     * @returns 
+     */
     async getChanges(currentPayload, previousPayload) {
         try {
             const diff = jsonDiff.diff(previousPayload, currentPayload)
@@ -123,27 +129,68 @@ export class HistoryService {
     }
 
     /**
-     * 
+     * This function is responsible for returning the full history of an id
      * @param entities Input parameter to identify
      * @returns 
      */
     async getHistory(entities: Array<EntityDTO>) {
-        const hash = this.encrypt(entities)
-
-        const getFullHistoryQuery = this.esQueries.getFullHistory(hash);
-        const index = this.configService.get("ES_INDEX")
-        const fullHistoryResp = await this.esService.queryIndexByDSL(getFullHistoryQuery, index)
-        const fullHistoryData = fullHistoryResp.body.hits.hits
-        const res = fullHistoryData.map(d => {
-            return {
-                timestamp: d._source.timestamp,
-                version: d._source.version,
-                changes: d._source.changes,
-                user: d._source.user,
-                type: d._source.type
+        try {
+            const hash = this.encrypt(entities)
+            const getFullHistoryQuery = this.esQueries.getFullHistory(hash);
+            const index = this.configService.get("ES_INDEX")
+            const fullHistoryResp = await this.esService.queryIndexByDSL(getFullHistoryQuery, index)
+            const fullHistoryData = fullHistoryResp.body.hits.hits
+            const res = fullHistoryData.map(d => {
+                return {
+                    timestamp: d._source.timestamp,
+                    version: d._source.version,
+                    changes: d._source.changes,
+                    user: d._source.user,
+                    type: d._source.type
+                }
+            })
+            return res
+        } catch (err) {
+            console.log(err)
+            if (err instanceof NotFoundException) {
+                throw new NotFoundException('Record Not found')
             }
-        })
-        return res
+            throw new InternalServerErrorException(err.message)
+        }
+    }
 
+    /**
+     * This function returns the data at a particular version
+     * @param entities 
+     * @param version 
+     * @returns 
+     */
+    async getHistoryAtVersion(entities: Array<EntityDTO>, version: number) {
+        try {
+            const hash = this.encrypt(entities)
+            const getHistoryAtVersionQuery = this.esQueries.getHistoryAtVersion(hash, version);
+            const index = this.configService.get("ES_INDEX")
+            const historyAtVersionResp = await this.esService.queryIndexByDSL(getHistoryAtVersionQuery, index)
+            const historyAtVersionData = historyAtVersionResp.body.hits.hits
+            if (historyAtVersionData.length == 0) {
+                throw new NotFoundException('Record Not found')
+            }
+            const data = historyAtVersionData[0]._source
+            return {
+                timestamp: data.timestamp,
+                version: data.version,
+                changes: data.changes,
+                user: data.user,
+                type: data.type,
+                body: data.body
+
+            }
+        } catch (err) {
+            console.log(err)
+            if (err instanceof NotFoundException) {
+                throw new NotFoundException('Record Not found')
+            }
+            throw new InternalServerErrorException(err.message)
+        }
     }
 }

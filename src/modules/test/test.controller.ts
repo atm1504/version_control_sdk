@@ -15,22 +15,18 @@ export class TestController {
 
     @Post('/history')
     async addHistory(@Body() body: any): Promise<any> {
-        console.log("we are here")
-        // console.log(body)
-        // body = JSON.parse(body)
         return await this.historyService.storeHistory(body.body, body.entities, body.user)
-        // return await this.postService.updatePost(postDTO)
+    }
+
+    @Get('/history/:version')
+    async getHistoryAtVersion(@Query('entities') entities: any, @Param('version') version: number,
+    ): Promise<any> {
+        return await this.historyService.getHistoryAtVersion(JSON.parse(entities), version)
     }
 
     @Get('/history')
     async getHistory(@Query('entities') entities: any): Promise<any> {
-        console.log("we are here")
         console.log(entities)
-        // console.log(body)
-        // body = JSON.parse(body)
         return await this.historyService.getHistory(JSON.parse(entities))
-        // return await this.postService.updatePost(postDTO)
     }
-
-
 }
