@@ -36,4 +36,22 @@ export class EsQueriesService {
       ]
     }
   }
+
+  /**
+   * 
+   * @param hash 
+   * @returns 
+   */
+  getFullHistory(hash: string) {
+    return {
+      "query": {
+        "term": {
+          "key.keyword": hash
+        }
+      },
+      "sort": [
+        { "timestamp": "desc" }
+      ]
+    }
+  }
 }

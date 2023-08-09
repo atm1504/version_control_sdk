@@ -27,7 +27,6 @@ export class HistoryService {
      * @param entities array
      */
     encrypt(entities: Array<EntityDTO>) {
-
         let s = ''
         entities.map(t => {
             s += t.entity + "-" + t.id.toString() + "#"
@@ -64,22 +63,7 @@ export class HistoryService {
      */
 
     async storeHistory(payload: any, entities: Array<EntityDTO>, user: UserDTO) {
-        // const prev = {
-        //     "p1": "Initial 1",
-        //     "p2": "Initial 2",
-        //     "p8": "Initial 2",
-        //     "nest": {
-        //         "p3": "Test",
-        //         "p7": "Test2",
-        //         "p5": {
-        //             "key": "anything"
-        //         }
-        //     }
-        // }
-
-        // Step 1: Pending
-
-        // Step 2:  Form a hash out of the entities input -Done
+        // Step 1 and 2:  Form a hash out of the entities input
         const hash = this.encrypt(entities)
 
         // Step 3: Check wether key exists or not
@@ -128,7 +112,6 @@ export class HistoryService {
 
     async getChanges(currentPayload, previousPayload) {
         try {
-
             const diff = jsonDiff.diff(previousPayload, currentPayload)
             console.log(diff)
             return diff
@@ -139,12 +122,28 @@ export class HistoryService {
         }
     }
 
-    // async newObjectToTrace(payload: any, user: UserDTO, hash: string, index: string) {
-    //     try {
+    /**
+     * 
+     * @param entities Input parameter to identify
+     * @returns 
+     */
+    async getHistory(entities: Array<EntityDTO>) {
+        const hash = this.encrypt(entities)
 
-    //     } catch (err) {
-    //         console.log(err)
-    //         throw new InternalServerErrorException(err.message)
-    //     }
-    // }
+        const getFullHistoryQuery = this.esQueries.getFullHistory(hash);
+        const index = this.configService.get("ES_INDEX")
+        const fullHistoryResp = await this.esService.queryIndexByDSL(getFullHistoryQuery, index)
+        const fullHistoryData = fullHistoryResp.body.hits.hits
+        const res = fullHistoryData.map(d => {
+            return {
+                timestamp: d._source.timestamp,
+                version: d._source.version,
+                changes: d._source.changes,
+                user: d._source.user,
+                type: d._source.type
+            }
+        })
+        return res
+
+    }
 }
