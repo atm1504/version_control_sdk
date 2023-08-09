@@ -95,6 +95,13 @@ export class HistoryService {
             eventType = TYPE.UPDATED
             version = lastHistoryData[0]._source.version + 1
             changes = await this.getChanges(payload, lastHistoryData[0]._source.body)
+
+            if (!changes) {
+                return {
+                    status: HttpStatus.BAD_REQUEST,
+                    message: "No changes detected."
+                }
+            }
             // return await this.addObjectToTrace(payload, user, hash, lastHistoryData[0], index)
         } else {
             console.log("Creating new Record")
@@ -114,7 +121,8 @@ export class HistoryService {
 
         await this.esService.write(obj, index)
         return {
-            status: HttpStatus.CREATED
+            status: HttpStatus.CREATED,
+            changes
         }
     }
 
@@ -122,7 +130,7 @@ export class HistoryService {
         try {
 
             const diff = jsonDiff.diff(previousPayload, currentPayload)
-            // console.log(diff)
+            console.log(diff)
             return diff
         } catch (err) {
             console.log(err)

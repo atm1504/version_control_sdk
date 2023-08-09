@@ -31,10 +31,9 @@ export class EsQueriesService {
         }
       },
       "size": 1,
-
+      "sort": [
+        { "timestamp": "desc" }
+      ]
     }
-    // "sort": [
-    //   { "timestamp": "desc" }
-    // ]
   }
 }
