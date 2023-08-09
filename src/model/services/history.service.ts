@@ -27,7 +27,6 @@ export class HistoryService {
      * @param entities array
      */
     encrypt(entities: Array<EntityDTO>) {
-
         let s = ''
         entities.map(t => {
             s += t.entity + "-" + t.id.toString() + "#"
@@ -64,22 +63,7 @@ export class HistoryService {
      */
 
     async storeHistory(payload: any, entities: Array<EntityDTO>, user: UserDTO) {
-        // const prev = {
-        //     "p1": "Initial 1",
-        //     "p2": "Initial 2",
-        //     "p8": "Initial 2",
-        //     "nest": {
-        //         "p3": "Test",
-        //         "p7": "Test2",
-        //         "p5": {
-        //             "key": "anything"
-        //         }
-        //     }
-        // }
-
-        // Step 1: Pending
-
-        // Step 2:  Form a hash out of the entities input -Done
+        // Step 1 and 2:  Form a hash out of the entities input
         const hash = this.encrypt(entities)
 
         // Step 3: Check wether key exists or not
@@ -126,9 +110,14 @@ export class HistoryService {
         }
     }
 
+    /**
+     * This function is responsible to comapre the two payloads
+     * @param currentPayload 
+     * @param previousPayload 
+     * @returns 
+     */
     async getChanges(currentPayload, previousPayload) {
         try {
-
             const diff = jsonDiff.diff(previousPayload, currentPayload)
             console.log(diff)
             return diff
@@ -139,12 +128,69 @@ export class HistoryService {
         }
     }
 
-    // async newObjectToTrace(payload: any, user: UserDTO, hash: string, index: string) {
-    //     try {
+    /**
+     * This function is responsible for returning the full history of an id
+     * @param entities Input parameter to identify
+     * @returns 
+     */
+    async getHistory(entities: Array<EntityDTO>) {
+        try {
+            const hash = this.encrypt(entities)
+            const getFullHistoryQuery = this.esQueries.getFullHistory(hash);
+            const index = this.configService.get("ES_INDEX")
+            const fullHistoryResp = await this.esService.queryIndexByDSL(getFullHistoryQuery, index)
+            const fullHistoryData = fullHistoryResp.body.hits.hits
+            const res = fullHistoryData.map(d => {
+                return {
+                    timestamp: d._source.timestamp,
+                    version: d._source.version,
+                    changes: d._source.changes,
+                    user: d._source.user,
+                    type: d._source.type
+                }
+            })
+            return res
+        } catch (err) {
+            console.log(err)
+            if (err instanceof NotFoundException) {
+                throw new NotFoundException('Record Not found')
+            }
+            throw new InternalServerErrorException(err.message)
+        }
+    }
 
-    //     } catch (err) {
-    //         console.log(err)
-    //         throw new InternalServerErrorException(err.message)
-    //     }
-    // }
+    /**
+     * This function returns the data at a particular version
+     * @param entities 
+     * @param version 
+     * @returns 
+     */
+    async getHistoryAtVersion(entities: Array<EntityDTO>, version: number) {
+        try {
+            const hash = this.encrypt(entities)
+            const getHistoryAtVersionQuery = this.esQueries.getHistoryAtVersion(hash, version);
+            const index = this.configService.get("ES_INDEX")
+            const historyAtVersionResp = await this.esService.queryIndexByDSL(getHistoryAtVersionQuery, index)
+            const historyAtVersionData = historyAtVersionResp.body.hits.hits
+            if (historyAtVersionData.length == 0) {
+                throw new NotFoundException('Record Not found')
+            }
+            const data = historyAtVersionData[0]._source
+            return {
+                timestamp: data.timestamp,
+                version: data.version,
+                changes: data.changes,
+                user: data.user,
+                type: data.type,
+                body: data.body
+
+            }
+        } catch (err) {
+            console.log(err)
+            if (err instanceof NotFoundException) {
+                throw new NotFoundException('Record Not found')
+            }
+            throw new InternalServerErrorException(err.message)
+        }
+    }
 }

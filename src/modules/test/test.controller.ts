@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
 import axios from 'axios';
 import { HistoryService } from 'src/model/services/history.service';
+import { EntityDTO } from 'src/model/entities/history.dto';
 
 @Controller('api')
 export class TestController {
@@ -13,11 +14,19 @@ export class TestController {
     ) { }
 
     @Post('/history')
-    async updatePost(@Body() body: any): Promise<any> {
-        console.log("we are here")
-        // console.log(body)
-        // body = JSON.parse(body)
+    async addHistory(@Body() body: any): Promise<any> {
         return await this.historyService.storeHistory(body.body, body.entities, body.user)
-        // return await this.postService.updatePost(postDTO)
+    }
+
+    @Get('/history/:version')
+    async getHistoryAtVersion(@Query('entities') entities: any, @Param('version') version: number,
+    ): Promise<any> {
+        return await this.historyService.getHistoryAtVersion(JSON.parse(entities), version)
+    }
+
+    @Get('/history')
+    async getHistory(@Query('entities') entities: any): Promise<any> {
+        console.log(entities)
+        return await this.historyService.getHistory(JSON.parse(entities))
     }
 }
