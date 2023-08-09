@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { HistoryService } from './services/history.service';
+import { ElasticSearchModule } from 'src/services/elasticsearch/elasticsearch.module';
 
 @Module({
     imports: [
@@ -21,7 +22,8 @@ import { HistoryService } from './services/history.service';
         // }),
 
         TypeOrmModule.forFeature([
-        ])
+        ]),
+        ElasticSearchModule
     ],
     providers: [HistoryService
     ],
