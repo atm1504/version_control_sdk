@@ -15,7 +15,9 @@ export class TestController {
     @Post('/history')
     async updatePost(@Body() body: any): Promise<any> {
         console.log("we are here")
-        return await this.historyService.storeHistory(body.payload, body.entities, body.user)
+        // console.log(body)
+        // body = JSON.parse(body)
+        return await this.historyService.storeHistory(body.body, body.entities, body.user)
         // return await this.postService.updatePost(postDTO)
     }
 }
